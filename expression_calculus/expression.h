@@ -192,5 +192,7 @@ struct OwningExpression {
 
 bool operator==(const Expression& lhs, const Expression& rhs);
 
+bool operator==(const OwningExpression& lhs, const OwningExpression& rhs);
+
 }  // namespace Semantic
 

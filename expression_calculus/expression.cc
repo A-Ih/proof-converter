@@ -1,5 +1,4 @@
 #include "expression.h"
-#include <iostream>
 
 namespace {
 
@@ -77,7 +76,6 @@ std::unique_ptr<Semantic::Expression> RegularToSemantic(const Regular::Expressio
       resultingExpression = std::make_unique<Semantic::Implication>(remains.substr(0, 4 + lhs->Len() + rhs->Len()), std::move(lhs), std::move(rhs));
       break;
   }
-  std::cout << "Result for '" << remains << "' is '" << resultingExpression->GetView() << "'" << std::endl;
   return resultingExpression;
 }
 
@@ -108,8 +106,6 @@ inline bool operator==(const Expression& lhs, const Expression& rhs) {
       return bopLhs.left == bopRhs.left && bopLhs.right == bopRhs.right;
       break;
     }
-    default:
-      assert(false);
   }
 }
 
@@ -129,6 +125,10 @@ OwningExpression::OwningExpression(const Regular::Expression* expr) : expression
 
 bool operator==(const Semantic::Expression& lhs, const Semantic::Expression& rhs) {
   return lhs.expressionView == rhs.expressionView;
+}
+
+bool operator==(const OwningExpression& lhs, const OwningExpression& rhs) {
+  return lhs.expressionString == rhs.expressionString;
 }
 
 } // nnamespace Semantic

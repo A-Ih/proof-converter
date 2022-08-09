@@ -126,13 +126,6 @@ public:
   Parser(std::string expressionLine) : tokenizer{std::make_unique<Tokenizer>(std::move(expressionLine))} {}
   Parser(std::unique_ptr<Tokenizer>&& t) : tokenizer{std::move(t)} {}
 
-  std::unique_ptr<Regular::Expression> Parse() {
-    std::unique_ptr<Regular::Expression> result;
-
-    tokenizer->Reset();  // so that we can parse the expression again :)
-    return result;
-  }
-
   std::unique_ptr<Regular::Expression> ParsePrim() {
     if (!tokenizer->Peek()) {
       throw std::runtime_error{"Token expected at the beginning of expression primitive"};
@@ -192,6 +185,31 @@ public:
       result = std::make_unique<Regular::Implication>(std::move(clause), std::move(result));
     }
     return result;
+  }
+
+  std::unique_ptr<Semantic::OwningExpression> ParseOwningExpression() {
+    auto reg = ParseExpression();
+    return std::make_unique<Semantic::OwningExpression>(reg.get());
+  }
+
+  bool ParseToken(TokenType tokenType) {
+    if (tokenizer->Peek() && tokenizer->Peek()->first == tokenType) {
+      tokenizer->NextToken();
+      return true;
+    }
+    return false;
+  }
+
+  std::string_view PeekToken() const {
+    if (tokenizer->Peek()) {
+      return tokenizer->Peek()->second;
+    } else {
+      return "";
+    }
+  }
+
+  bool IsExhausted() const {
+    return !tokenizer->Peek();
   }
 
 private:
