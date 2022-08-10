@@ -42,22 +42,22 @@ std::string RegularToPrefixNotation(const Regular::Expression* expr) {
   return result;
 }
 
-std::unique_ptr<Semantic::Expression> RegularToSemantic(const Regular::Expression* expr, std::string_view remains) {
-  std::unique_ptr<Semantic::Expression> resultingExpression;
+std::shared_ptr<Semantic::Expression> RegularToSemantic(const Regular::Expression* expr, std::string_view remains) {
+  std::shared_ptr<Semantic::Expression> resultingExpression;
   switch (expr->GetType()) {
     case ExpressionType::BOTTOM:
       assert(remains.find("_|_") == 0);
-      resultingExpression = std::make_unique<Semantic::Bottom>(remains.substr(0, 3));
+      resultingExpression = std::make_shared<Semantic::Bottom>(remains.substr(0, 3));
       break;
     case ExpressionType::VARIABLE:
-      resultingExpression = std::make_unique<Semantic::Variable>(remains.substr(0, Regular::Variable::fromExpression(expr)->name.size()));
+      resultingExpression = std::make_shared<Semantic::Variable>(remains.substr(0, Regular::Variable::fromExpression(expr)->name.size()));
       break;
     case ExpressionType::CONJUNCTION: {
       assert(remains.find("& ") == 0);
       auto lhs = RegularToSemantic(Regular::Conjunction::fromExpression(expr)->left.get(), remains.substr(2));
       assert(remains[2 + lhs->Len()] == ' ');
       auto rhs = RegularToSemantic(Regular::Conjunction::fromExpression(expr)->right.get(), remains.substr(3 + lhs->Len()));
-      resultingExpression = std::make_unique<Semantic::Conjunction>(remains.substr(0, 3 + lhs->Len() + rhs->Len()), std::move(lhs), std::move(rhs));
+      resultingExpression = std::make_shared<Semantic::Conjunction>(remains.substr(0, 3 + lhs->Len() + rhs->Len()), std::move(lhs), std::move(rhs));
       break;
     }
     case ExpressionType::DISJUNCTION: {
@@ -65,7 +65,7 @@ std::unique_ptr<Semantic::Expression> RegularToSemantic(const Regular::Expressio
       auto lhs = RegularToSemantic(Regular::Disjunction::fromExpression(expr)->left.get(), remains.substr(2));
       assert(remains[2 + lhs->Len()] == ' ');
       auto rhs = RegularToSemantic(Regular::Disjunction::fromExpression(expr)->right.get(), remains.substr(3 + lhs->Len()));
-      resultingExpression = std::make_unique<Semantic::Disjunction>(remains.substr(0, 3 + lhs->Len() + rhs->Len()), std::move(lhs), std::move(rhs));
+      resultingExpression = std::make_shared<Semantic::Disjunction>(remains.substr(0, 3 + lhs->Len() + rhs->Len()), std::move(lhs), std::move(rhs));
       break;
     }
     case ExpressionType::IMPLICATION:
@@ -73,7 +73,7 @@ std::unique_ptr<Semantic::Expression> RegularToSemantic(const Regular::Expressio
       auto lhs = RegularToSemantic(Regular::Implication::fromExpression(expr)->left.get(), remains.substr(3));
       assert(remains[3 + lhs->Len()] == ' ');
       auto rhs = RegularToSemantic(Regular::Implication::fromExpression(expr)->right.get(), remains.substr(4 + lhs->Len()));
-      resultingExpression = std::make_unique<Semantic::Implication>(remains.substr(0, 4 + lhs->Len() + rhs->Len()), std::move(lhs), std::move(rhs));
+      resultingExpression = std::make_shared<Semantic::Implication>(remains.substr(0, 4 + lhs->Len() + rhs->Len()), std::move(lhs), std::move(rhs));
       break;
   }
   return resultingExpression;

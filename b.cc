@@ -8,9 +8,9 @@ int main() {
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
 
-  std::vector<std::unique_ptr<Semantic::OwningExpression>> hypotheses;
-  std::unique_ptr<Semantic::OwningExpression> provenExpression;
-  std::vector<std::unique_ptr<Semantic::OwningExpression>> proof;
+  std::vector<std::shared_ptr<Semantic::OwningExpression>> hypotheses;
+  std::shared_ptr<Semantic::OwningExpression> provenExpression;
+  std::vector<std::shared_ptr<Semantic::OwningExpression>> proof;
 
   {
     std::string firstLine;

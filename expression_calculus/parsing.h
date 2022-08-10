@@ -187,9 +187,9 @@ public:
     return result;
   }
 
-  std::unique_ptr<Semantic::OwningExpression> ParseOwningExpression() {
+  std::shared_ptr<Semantic::OwningExpression> ParseOwningExpression() {
     auto reg = ParseExpression();
-    return std::make_unique<Semantic::OwningExpression>(reg.get());
+    return std::make_shared<Semantic::OwningExpression>(reg.get());
   }
 
   bool ParseToken(TokenType tokenType) {

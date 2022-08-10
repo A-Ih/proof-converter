@@ -1,6 +1,5 @@
 #pragma once
 
-#include <endian.h>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -153,18 +152,18 @@ struct Variable : Expression {
 
 template<ExpressionType EXPRESSION_TYPE>
 struct BinaryOperation : Expression {
-  BinaryOperation(std::string_view view, std::unique_ptr<Expression>&& lhs, std::unique_ptr<Expression>&& rhs) :
+  BinaryOperation(std::string_view view, const std::shared_ptr<Expression>& lhs, const std::shared_ptr<Expression>& rhs) :
     Expression{view},
-    left{std::move(lhs)},
-    right{std::move(rhs)}
+    left{lhs},
+    right{rhs}
   {}
 
   ExpressionType GetType() const final {
     return EXPRESSION_TYPE;
   }
 
-  std::unique_ptr<Expression> left;
-  std::unique_ptr<Expression> right;
+  std::shared_ptr<Expression> left;
+  std::shared_ptr<Expression> right;
 };
 
 using Conjunction = BinaryOperation<ExpressionType::CONJUNCTION>;
@@ -187,7 +186,7 @@ struct OwningExpression {
   }
 
   std::string expressionString;
-  std::unique_ptr<Expression> root;
+  std::shared_ptr<Expression> root;
 };
 
 bool operator==(const Expression& lhs, const Expression& rhs);
