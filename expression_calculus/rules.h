@@ -2,6 +2,7 @@
 
 #include "expression.h"
 #include <algorithm>
+#include <memory>
 
 enum class RuleType {
   AX,
@@ -36,7 +37,7 @@ struct NaturalNode {
 };
 
 struct Ax : NaturalNode {
-  Ax(TPtr phi) : NaturalNode{{}, phi} {}
+  Ax(TPtr hyp, TPtr phi) : NaturalNode{hyp, phi} {}
 
   RuleType GetRuleType() const final {
     return RuleType::AX;
@@ -143,15 +144,114 @@ struct EBot : NaturalNode {
   }
 };
 
-inline std::unique_ptr<NaturalNode> MakeAx1(
-    std::shared_ptr<Semantic::Expression> phi,
-    std::shared_ptr<Semantic::Expression> a,
-    std::shared_ptr<Semantic::Expression> b) {
-  // TODO: GetComponent
-  // Although we can get away without GetComponent and just construct the shit
-  // (this yields more wasted resources)
-  return {};
+template<typename THead, typename ...TTail>
+inline constexpr bool ARE_SAME_V = (std::is_same_v<THead, TTail> && ...);
 
+inline std::unique_ptr<NaturalNode> MakeAx1(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `a -> b -> a`
+  using namespace Semantic;
+  auto a = GetComponent<Implication>(phi.get())->left;
+  auto bArrowA = GetComponent<Implication>(phi.get())->right;
+  auto b = GetComponent<Implication>(phi.get(), &Implication::right)->left;
+  static_assert(ARE_SAME_V<TPtr, decltype(a), decltype(bArrowA), decltype(b)>);
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+      std::make_unique<IImpl>(a, bArrowA,
+        std::make_unique<Ax>(b, a)));
 }
+
+inline std::unique_ptr<NaturalNode> MakeAx2(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `(a -> b) -> (a -> b -> y) -> (a -> y)`
+  using namespace Semantic;
+  auto ab = GetComponent<Implication>(phi.get())->left;
+  auto abyAy = GetComponent<Implication>(phi.get())->right;
+  auto aby = GetComponent<Implication>(abyAy.get())->left;
+  auto ay = GetComponent<Implication>(abyAy.get())->right;
+  auto a = GetComponent<Implication>(ab.get())->left;
+  auto b = GetComponent<Implication>(ab.get())->right;
+  auto y = GetComponent<Implication>(ay.get())->right;
+  auto by = std::make_shared<Implication>(b, y);
+  static_assert(ARE_SAME_V<TPtr, decltype(ab), decltype(abyAy), decltype(aby), decltype(ay), decltype(a), decltype(b), decltype(y)>);
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<IImpl>(ab, abyAy,
+          std::make_unique<IImpl>(aby, ay,
+            std::make_unique<EImpl>(a, y,
+              std::make_unique<EImpl>(TPtr{}, by,
+                std::make_unique<Ax>(TPtr{}, aby),
+                std::make_unique<Ax>(TPtr{}, a)),
+              std::make_unique<EImpl>(TPtr{}, b,
+                std::make_unique<Ax>(TPtr{}, ab),
+                std::make_unique<Ax>(TPtr{}, a))))));
+}
+
+inline std::unique_ptr<NaturalNode> MakeAx3(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `a -> b -> a & b`
+  using namespace Semantic;
+  auto bArrowAAndB = GetComponent<Implication>(phi.get())->right;  // b -> a & b
+  auto aAndB = GetComponent<Implication>(bArrowAAndB.get())->right;  // a & b
+  auto a = GetComponent<Conjunction>(aAndB.get())->left;  // a
+  auto b = GetComponent<Conjunction>(aAndB.get())->right;  // b
+  static_assert(ARE_SAME_V<TPtr, decltype(bArrowAAndB), decltype(aAndB), decltype(a), decltype(b)>);
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<IImpl>(a, bArrowAAndB,
+          std::make_unique<ICon>(b, aAndB,
+            std::make_unique<Ax>(TPtr{}, a),
+            std::make_unique<Ax>(TPtr{}, b))));
+}
+
+inline std::unique_ptr<NaturalNode> MakeAx4(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `a & b -> a`
+  using namespace Semantic;
+  auto aAndB = GetComponent<Implication>(phi.get())->left;  // a & b
+  auto a = GetComponent<Conjunction>(aAndB.get())->left;  // a
+  auto b = GetComponent<Conjunction>(aAndB.get())->right;  // b
+  static_assert(ARE_SAME_V<TPtr, decltype(aAndB), decltype(a), decltype(b)>);
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<ElCon>(aAndB, a,
+          std::make_unique<Ax>(TPtr{}, aAndB)));
+}
+
+inline std::unique_ptr<NaturalNode> MakeAx5(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `a & b -> b`
+  using namespace Semantic;
+  auto aAndB = GetComponent<Implication>(phi.get())->left;  // a & b
+  auto a = GetComponent<Conjunction>(aAndB.get())->left;  // a
+  auto b = GetComponent<Conjunction>(aAndB.get())->right;  // b
+  static_assert(ARE_SAME_V<TPtr, decltype(aAndB), decltype(a), decltype(b)>);
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<ErCon>(aAndB, b,
+          std::make_unique<Ax>(TPtr{}, aAndB)));
+}
+
+inline std::unique_ptr<NaturalNode> MakeAx6(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `a -> a | b`
+  using namespace Semantic;
+  auto aOrB = GetComponent<Implication>(phi.get())->right;  // a | b
+  auto a = GetComponent<Disjunction>(aOrB.get())->left;  // a
+  auto b = GetComponent<Disjunction>(aOrB.get())->right;  // b
+  static_assert(ARE_SAME_V<TPtr, decltype(aOrB), decltype(a), decltype(b)>);
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<IlDis>(a, aOrB,
+          std::make_unique<Ax>(TPtr{}, a)));
+}
+
+inline std::unique_ptr<NaturalNode> MakeAx7(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `b -> a | b`
+  using namespace Semantic;
+  auto aOrB = GetComponent<Implication>(phi.get())->right;  // a | b
+  auto a = GetComponent<Disjunction>(aOrB.get())->left;  // a
+  auto b = GetComponent<Disjunction>(aOrB.get())->right;  // b
+  static_assert(ARE_SAME_V<TPtr, decltype(aOrB), decltype(a), decltype(b)>);
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<IrDis>(b, aOrB,
+          std::make_unique<Ax>(TPtr{}, a)));
+}
+
 
 }  // namespace Rules

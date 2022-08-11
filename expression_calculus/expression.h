@@ -182,6 +182,8 @@ struct OwningExpression {
     // `expressionString` i.e. the refered string should remain intact until the
     // refering views are destroyed (since std::basic_string_view is not
     // trivially destructible (at least in c++17))
+    assert(root.use_count() == 0);  // OwningExpression should be the last owner
+                                    // of `root` and all of its descendants
     root.reset();
   }
 
@@ -192,6 +194,27 @@ struct OwningExpression {
 bool operator==(const Expression& lhs, const Expression& rhs);
 
 bool operator==(const OwningExpression& lhs, const OwningExpression& rhs);
+
+template<typename TComp>
+const TComp* GetComponent(const Expression* expr) {
+  return dynamic_cast<const TComp*>(expr);
+}
+
+template<typename TComp, typename TExpr, typename TField, typename ...TRest, typename ...TFields>
+const TComp* GetComponent(const Expression* expr, TField TExpr::* fieldPtr, TFields TRest::*... rest) {
+  auto downcastedExpr = dynamic_cast<const TExpr*>(expr);
+  if (downcastedExpr == nullptr) {
+    return nullptr;
+  }
+  if constexpr (std::is_same_v<TField, std::shared_ptr<Expression>>) {
+    return GetComponent<TComp>((downcastedExpr->*fieldPtr).get(), rest...);
+  } else if constexpr (std::is_same_v<TComp, TField>) {
+    return &(downcastedExpr->*fieldPtr);
+  } else {
+    // The access is invalid
+    return nullptr;
+  }
+}
 
 }  // namespace Semantic
 
