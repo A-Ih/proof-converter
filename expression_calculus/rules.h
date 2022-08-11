@@ -137,11 +137,13 @@ struct EDis : NaturalNode {
 };
 
 struct EBot : NaturalNode {
-  EBot(TPtr hyp, TPtr phi) : NaturalNode{hyp, phi} {}
+  EBot(TPtr hyp, TPtr phi, std::unique_ptr<NaturalNode>&& c) : NaturalNode{hyp, phi}, child{std::move(c)} {}
 
   RuleType GetRuleType() const final {
     return RuleType::EBOT;
   }
+
+  std::unique_ptr<NaturalNode> child;
 };
 
 template<typename THead, typename ...TTail>
@@ -170,7 +172,7 @@ inline std::unique_ptr<NaturalNode> MakeAx2(std::shared_ptr<Semantic::Expression
   auto a = GetComponent<Implication>(ab.get())->left;
   auto b = GetComponent<Implication>(ab.get())->right;
   auto y = GetComponent<Implication>(ay.get())->right;
-  auto by = std::make_shared<Implication>(b, y);
+  auto by = GetComponent<Implication>(aby.get())->right;
   static_assert(ARE_SAME_V<TPtr, decltype(ab), decltype(abyAy), decltype(aby), decltype(ay), decltype(a), decltype(b), decltype(y)>);
   return
     std::make_unique<IImpl>(TPtr{}, phi,
@@ -251,6 +253,76 @@ inline std::unique_ptr<NaturalNode> MakeAx7(std::shared_ptr<Semantic::Expression
     std::make_unique<IImpl>(TPtr{}, phi,
         std::make_unique<IrDis>(b, aOrB,
           std::make_unique<Ax>(TPtr{}, a)));
+}
+
+inline std::unique_ptr<NaturalNode> MakeAx8(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `(a -> y) -> (b -> y) -> (a | b -> y)`
+  using namespace Semantic;
+  auto ay = GetComponent<Implication>(phi.get())->left;  // a -> b
+  auto byaby = GetComponent<Implication>(phi.get())->right;  // (b -> y) -> (a | b -> y)
+  auto by = GetComponent<Implication>(byaby.get())->left;  // b -> y
+  auto aby = GetComponent<Implication>(byaby.get())->right;  // a | b -> y
+  auto ab = GetComponent<Implication>(aby.get())->left;  // a | b
+  auto a = GetComponent<Disjunction>(ab.get())->left;  // a
+  auto b = GetComponent<Disjunction>(ab.get())->right;  // b
+  auto y = GetComponent<Disjunction>(aby.get())->right;  // y
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<IImpl>(ay, byaby,
+          std::make_unique<IImpl>(by, aby,
+            std::make_unique<EDis>(ab, y,
+              std::make_unique<EImpl>(a, y,
+                std::make_unique<Ax>(TPtr{}, ay),
+                std::make_unique<Ax>(TPtr{}, a)),
+              std::make_unique<EImpl>(b, y,
+                std::make_unique<Ax>(TPtr{}, by),
+                std::make_unique<Ax>(TPtr{}, b)),
+              std::make_unique<Ax>(TPtr{}, ab)))));
+}
+
+inline std::unique_ptr<NaturalNode> MakeAx9(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `(a -> b) -> (a -> b -> _|_) -> (a -> _|_)`
+  using namespace Semantic;
+  auto ab = GetComponent<Implication>(phi.get())->left;  // a -> b
+  auto ab_a_ = GetComponent<Implication>(phi.get())->right;  // (a -> b -> _|_) -> (a -> _|_)
+  auto ab_ = GetComponent<Implication>(ab_a_.get())->left;  // a -> b -> _|_
+  auto a_ = GetComponent<Implication>(ab_a_.get())->right;  // a -> _|_
+  auto b_ = GetComponent<Implication>(ab_.get())->right;  // b -> _|_
+  auto a = GetComponent<Implication>(ab.get())->left;  // a
+  auto b = GetComponent<Implication>(ab.get())->right;  // b
+  auto bot = GetComponent<Implication>(a_.get())->right;  // _|_
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<IImpl>(ab, ab_a_,
+          std::make_unique<IImpl>(ab_, a_,
+            std::make_unique<EImpl>(a, bot,
+              std::make_unique<EImpl>(TPtr{}, b_,
+                std::make_unique<Ax>(TPtr{}, ab_),
+                std::make_unique<Ax>(TPtr{}, a)),
+              std::make_unique<EImpl>(TPtr{}, b,
+                std::make_unique<Ax>(TPtr{}, ab),
+                std::make_unique<Ax>(TPtr{}, a))))));
+}
+
+inline std::unique_ptr<NaturalNode> MakeAx10(std::shared_ptr<Semantic::Expression> phi) {
+  // Precondition: phi has a structure like `a -> (a -> _|_) -> b`
+  using namespace Semantic;
+  auto a_b = GetComponent<Implication>(phi.get())->right;  // (a -> _|_) -> b
+  auto a = GetComponent<Implication>(phi.get())->left;  // a
+  auto b = GetComponent<Implication>(a_b.get())->right;  // b
+  auto a_ = GetComponent<Implication>(a_b.get())->left;  // a -> _|_
+  auto bot = GetComponent<Implication>(a_.get())->right;  // _|_
+  auto _b = std::make_shared<Implication>(bot, b); // _|_ -> b
+  return
+    std::make_unique<IImpl>(TPtr{}, phi,
+        std::make_unique<IImpl>(a, a_b,
+          std::make_unique<EImpl>(a_, b,
+            std::make_unique<IImpl>(TPtr{}, _b,
+              std::make_unique<EBot>(bot, b,
+                std::make_unique<Ax>(TPtr{}, bot))),
+            std::make_unique<EImpl>(TPtr{}, bot,
+              std::make_unique<Ax>(TPtr{}, a_),
+              std::make_unique<Ax>(TPtr{}, a)))));
 }
 
 
