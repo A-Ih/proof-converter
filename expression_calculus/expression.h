@@ -182,7 +182,7 @@ struct OwningExpression {
     // `expressionString` i.e. the refered string should remain intact until the
     // refering views are destroyed (since std::basic_string_view is not
     // trivially destructible (at least in c++17))
-    assert(root.use_count() == 0);  // OwningExpression should be the last owner
+    assert(root.use_count() == 1);  // OwningExpression should be the last owner
                                     // of `root` and all of its descendants
     root.reset();
   }

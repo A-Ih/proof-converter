@@ -448,7 +448,11 @@ inline std::shared_ptr<NaturalNode> MakeAx10(std::shared_ptr<Semantic::Expressio
   auto b = GetComponent<Implication>(a_b.get())->right;  // b
   auto a_ = GetComponent<Implication>(a_b.get())->left;  // a -> _|_
   auto bot = GetComponent<Implication>(a_.get())->right;  // _|_
-  auto _b = std::make_shared<Implication>(bot, b); // _|_ -> b
+  auto _b = std::make_shared<Implication>(std::string_view{}, bot, b); // _|_ -> b
+  //        v---------------------------------------^
+  // this shit is super sketchy!!! We violate the invariant but it's reasonable
+  // because we won't calculate hash and compare expressions inside NaturalNode
+  // (this AST serves only as an intermediate representation)
   return
     std::make_shared<IImpl>(TPtr{}, phi,
         std::make_shared<IImpl>(a, a_b,
