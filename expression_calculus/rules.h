@@ -32,6 +32,8 @@ struct NaturalNode {
   TPtr expr;
 
   virtual RuleType GetRuleType() const = 0;
+  virtual std::string_view GetAnnotation() const = 0;
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const = 0;
 
   virtual ~NaturalNode() = default;
 };
@@ -42,6 +44,14 @@ struct Ax : NaturalNode {
   RuleType GetRuleType() const final {
     return RuleType::AX;
   }
+
+  virtual std::string_view GetAnnotation() const {
+    return "Ax";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {};
+  }
 };
 
 struct EImpl : NaturalNode {
@@ -50,6 +60,14 @@ struct EImpl : NaturalNode {
 
   RuleType GetRuleType() const final {
     return RuleType::EIMPL;
+  }
+
+  virtual std::string_view GetAnnotation() const {
+    return "E->";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {lhs, rhs};
   }
 
   std::shared_ptr<NaturalNode> lhs;
@@ -64,6 +82,14 @@ struct IImpl : NaturalNode {
     return RuleType::IIMPL;
   }
 
+  virtual std::string_view GetAnnotation() const {
+    return "I->";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {child};
+  }
+
   std::shared_ptr<NaturalNode> child;
 };
 
@@ -73,6 +99,14 @@ struct ICon : NaturalNode {
 
   RuleType GetRuleType() const final {
     return RuleType::ICON;
+  }
+
+  virtual std::string_view GetAnnotation() const {
+    return "I&";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {lhs, rhs};
   }
 
   std::shared_ptr<NaturalNode> lhs;
@@ -87,6 +121,14 @@ struct ElCon : NaturalNode {
     return RuleType::ELCON;
   }
 
+  virtual std::string_view GetAnnotation() const {
+    return "El&";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {child};
+  }
+
   std::shared_ptr<NaturalNode> child;
 };
 
@@ -96,6 +138,14 @@ struct ErCon : NaturalNode {
 
   RuleType GetRuleType() const final {
     return RuleType::ERCON;
+  }
+
+  virtual std::string_view GetAnnotation() const {
+    return "Er&";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {child};
   }
 
   std::shared_ptr<NaturalNode> child;
@@ -109,6 +159,14 @@ struct IlDis : NaturalNode {
     return RuleType::ILDIS;
   }
 
+  virtual std::string_view GetAnnotation() const {
+    return "Il|";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {child};
+  }
+
   std::shared_ptr<NaturalNode> child;
 };
 
@@ -118,6 +176,14 @@ struct IrDis : NaturalNode {
 
   RuleType GetRuleType() const final {
     return RuleType::IRDIS;
+  }
+
+  virtual std::string_view GetAnnotation() const {
+    return "Ir|";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {child};
   }
 
   std::shared_ptr<NaturalNode> child;
@@ -131,6 +197,14 @@ struct EDis : NaturalNode {
     return RuleType::EDIS;
   }
 
+  virtual std::string_view GetAnnotation() const {
+    return "E|";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {lhs, mhs, rhs};
+  }
+
   std::shared_ptr<NaturalNode> lhs;
   std::shared_ptr<NaturalNode> mhs;
   std::shared_ptr<NaturalNode> rhs;
@@ -141,6 +215,14 @@ struct EBot : NaturalNode {
 
   RuleType GetRuleType() const final {
     return RuleType::EBOT;
+  }
+
+  virtual std::string_view GetAnnotation() const {
+    return "E_|_";
+  }
+
+  virtual std::vector<std::shared_ptr<NaturalNode>> GetChildren() const {
+    return {child};
   }
 
   std::shared_ptr<NaturalNode> child;

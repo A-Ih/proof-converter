@@ -7,6 +7,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <sstream>
 
 struct Hasher {
   std::size_t operator()(const std::shared_ptr<Semantic::Expression>& expr) const {
@@ -34,6 +35,77 @@ using TMap = std::unordered_map<std::shared_ptr<Semantic::Expression>, TValue, H
 
 using TSet = std::unordered_set<std::shared_ptr<Semantic::Expression>, Hasher, ProperSharedPtrComparator>;
 
+void PrintExpression(std::ostream& os, const Semantic::Expression& expr) {
+  using namespace Semantic;
+  switch (expr.GetType()) {
+    case ExpressionType::BOTTOM:
+      os << "_|_";
+      break;
+    case ExpressionType::VARIABLE:
+      os << GetComponent<Variable>(&expr)->expressionView;
+      break;
+    case ExpressionType::CONJUNCTION:
+      os << "(";
+      PrintExpression(os, *GetComponent<Expression>(&expr, &Conjunction::left));
+      os << ")&(";
+      PrintExpression(os, *GetComponent<Expression>(&expr, &Conjunction::right));
+      os << ")";
+      break;
+    case ExpressionType::DISJUNCTION:
+      os << "(";
+      PrintExpression(os, *GetComponent<Expression>(&expr, &Disjunction::left));
+      os << ")|(";
+      PrintExpression(os, *GetComponent<Expression>(&expr, &Disjunction::right));
+      os << ")";
+      break;
+    case ExpressionType::IMPLICATION:
+      os << "(";
+      PrintExpression(os, *GetComponent<Expression>(&expr, &Implication::left));
+      os << ")->(";
+      PrintExpression(os, *GetComponent<Expression>(&expr, &Implication::right));
+      os << ")";
+      break;
+  }
+}
+
+std::ostream& operator<<(std::ostream& os, const Semantic::Expression& expr) {
+  PrintExpression(os, expr);
+  return os;
+}
+
+void PrintAnswer(
+    std::ostream& os,
+    std::vector<std::shared_ptr<Semantic::Expression>>& hypotheses,
+    const std::shared_ptr<Rules::NaturalNode>& node,
+    std::size_t depth) {
+  // Add new hypothesis that was introduced in current node
+  if (node->addHyp.use_count() > 0) {
+    hypotheses.push_back(node->addHyp);
+  }
+
+  {
+    // Traverse children first
+    auto children = node->GetChildren();
+    for (const auto& child : children) {
+      PrintAnswer(os, hypotheses, child, depth + 1);
+    }
+  }
+
+  os << "[" << depth << "] ";
+  if (!hypotheses.empty()) {
+    os << *hypotheses[0].get();
+    for (std::size_t i = 1; i < hypotheses.size(); i++) {
+      os << "," << *hypotheses[i].get();
+    }
+  }
+  os << "|-" << *(node->expr.get()) << " [" << node->GetAnnotation() << "]" << std::endl;
+
+  // Pop the hypothesis that was introduced in this node
+  if (node->addHyp.use_count() > 0) {
+    hypotheses.pop_back();
+  }
+}
+
 int main() {
   std::ios_base::sync_with_stdio(false);
   std::cin.tie(nullptr);
@@ -56,7 +128,7 @@ int main() {
         hypotheses.insert(owningHypothesesList.back()->root);
       } while (parser->ParseToken(TokenType::COMMA));
       if (!parser->ParseToken(TokenType::TURNSTILE)) {
-        std::cerr << "Turnstile expected, '" << parser->PeekToken() << "'" << std::endl;
+        std::cerr << "Turnstile expected, '" << parser->PeekToken() << "' got" << std::endl;
         return 1;
       }
       provenExpression = parser->ParseOwningExpression();
@@ -147,4 +219,12 @@ int main() {
     }
   }
 
+  {
+    std::vector<std::shared_ptr<Semantic::Expression>> hyps;
+    hyps.reserve(hypotheses.size());
+    for (const auto &owningHyp : owningHypothesesList) {
+      hyps.emplace_back(owningHyp->root);
+    }
+    PrintAnswer(std::cout, hyps, encountered[proof.back()->root], 0);
+  }
 }
