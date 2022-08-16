@@ -2,10 +2,6 @@
 
 namespace {
 
-  // TODO: it seems a lot easier to build the second AST as we are building this
-  // massive string (it is easier to detect the boundaries of expressions).
-  // However there are issues with lifetime, so it would be better to just save
-  // indexes
   // The start of expression
 void RegularToPrefixNotation(const Regular::Expression* expr, std::string& result) {
   switch (expr->GetType()) {

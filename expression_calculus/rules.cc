@@ -295,7 +295,7 @@ std::shared_ptr<NaturalNode> MakeAx10(std::shared_ptr<Semantic::Expression> phi)
   auto bot = GetComponent<Implication>(a_.get())->right;  // _|_
   auto _b = std::make_shared<Implication>(std::string_view{}, bot, b); // _|_ -> b
   //        v---------------------------------------^
-  // this shit is super sketchy!!! We violate the invariant but it's reasonable
+  // this stuff is super sketchy!!! We violate the invariant but it's reasonable
   // because we won't calculate hash and compare expressions inside NaturalNode
   // (this AST serves only as an intermediate representation)
   return
