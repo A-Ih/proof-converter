@@ -66,5 +66,15 @@ int main() {
     Test t{"((A))->(B|(C|D))"};
     ASSERT_EQUAL(t.GetPrefixView(), "-> A | B | C D");
   }
+
+  {
+    Test t{"A -> B -> A & B"};
+    ASSERT_EQUAL(t.GetPrefixView(), "-> A -> B & A B");
+  }
+
+  {
+    Test t{"(A->B)->(A->B->C)->(A->C)"};
+    ASSERT_EQUAL(t.GetPrefixView(), "-> -> A B -> -> A -> B C -> A C");
+  }
 }
 

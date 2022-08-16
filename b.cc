@@ -193,7 +193,7 @@ int main() {
     } else if (Rules::MatchAx10(pi.get())) {
       encountered[pi] = Rules::MakeAx10(pi);
     } else {
-      std::cout << "Proof is incorrect at line " << i + 1 << std::endl;
+      std::cout << "Proof is incorrect at line " << i + 2 << std::endl;
       return 0;
     }
 

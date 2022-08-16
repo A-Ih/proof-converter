@@ -3,6 +3,7 @@
 #include "expression.h"
 #include <algorithm>
 #include <memory>
+#include <iostream>
 
 enum class RuleType {
   AX,
@@ -244,7 +245,7 @@ bool MatchAx2(const Semantic::Expression* expr) {
   // (a1 -> b1) -> (a2 -> b2 -> y1) -> (a3 -> y2)
   using namespace Semantic;
   constexpr auto l = &Implication::left;
-  constexpr auto r = &Implication::left;
+  constexpr auto r = &Implication::right;
   auto a1 = GetComponent<Expression>(expr, l, l);
   auto b1 = GetComponent<Expression>(expr, l, r);
 
@@ -257,7 +258,7 @@ bool MatchAx2(const Semantic::Expression* expr) {
   return a1 && a2 && a3 && b1 && b2 && y1 && y2
     && *a1 == *a2 && *a2 == *a3
     && *b1 == *b2
-    && y1 == y2;
+    && *y1 == *y2;
 }
 
 bool MatchAx3(const Semantic::Expression* expr) {
@@ -309,10 +310,10 @@ bool MatchAx8(const Semantic::Expression* expr) {
   // (a1 -> y1) -> (b1 -> y2) -> (a2 | b2 -> y3)
   using namespace Semantic;
   constexpr auto il = &Implication::left;
-  constexpr auto ir = &Implication::left;
+  constexpr auto ir = &Implication::right;
   constexpr auto dl = &Disjunction::left;
-  constexpr auto dr = &Disjunction::left;
-  auto a1 = GetComponent<Expression>(expr, il);
+  constexpr auto dr = &Disjunction::right;
+  auto a1 = GetComponent<Expression>(expr, il, il);
   auto y1 = GetComponent<Expression>(expr, il, ir);
 
   auto b1 = GetComponent<Expression>(expr, ir, il, il);
@@ -332,7 +333,7 @@ bool MatchAx9(const Semantic::Expression* expr) {
   // (a1 -> b1) -> (a2 -> b2 -> _|_1) -> (a3 -> _|_2)
   using namespace Semantic;
   constexpr auto l = &Implication::left;
-  constexpr auto r = &Implication::left;
+  constexpr auto r = &Implication::right;
   auto a1 = GetComponent<Expression>(expr, l, l);
   auto b1 = GetComponent<Expression>(expr, l, r);
 
@@ -354,8 +355,8 @@ bool MatchAx10(const Semantic::Expression* expr) {
   using namespace Semantic;
 
   auto a1 = Semantic::GetComponent<Expression>(expr, &Implication::left);
-  auto a2 = Semantic::GetComponent<Expression>(expr, &Implication::right, &Implication::left);
-  auto bot = Semantic::GetComponent<Bottom>(expr, &Implication::right, &Implication::right);
+  auto a2 = Semantic::GetComponent<Expression>(expr, &Implication::right, &Implication::left, &Implication::left);
+  auto bot = Semantic::GetComponent<Bottom>(expr, &Implication::right, &Implication::left, &Implication::right);
 
   return a1 && a2 && bot && *a1 == *a2;
 }
@@ -483,7 +484,7 @@ inline std::shared_ptr<NaturalNode> MakeAx8(std::shared_ptr<Semantic::Expression
   auto ab = GetComponent<Implication>(aby.get())->left;  // a | b
   auto a = GetComponent<Disjunction>(ab.get())->left;  // a
   auto b = GetComponent<Disjunction>(ab.get())->right;  // b
-  auto y = GetComponent<Disjunction>(aby.get())->right;  // y
+  auto y = GetComponent<Implication>(aby.get())->right;  // y
   return
     std::make_shared<IImpl>(TPtr{}, phi,
         std::make_shared<IImpl>(ay, byaby,

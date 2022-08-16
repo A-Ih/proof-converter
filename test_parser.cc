@@ -36,6 +36,12 @@ private:
 
 int main() {
   using namespace Regular;
+  constexpr auto IL = &Implication::left;
+  constexpr auto IR = &Implication::right;
+  constexpr auto DL = &Disjunction::left;
+  constexpr auto DR = &Disjunction::right;
+  constexpr auto CL = &Conjunction::left;
+  constexpr auto CR = &Conjunction::right;
   {
     Test t{"A"};
     ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Variable::name), "A");
@@ -43,39 +49,54 @@ int main() {
 
   {
     Test t{"A->B"};
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::left, &Variable::name), "A");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Variable::name), "B");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, &Variable::name), "A");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, &Variable::name), "B");
   }
 
   {
     Test t{"A->B->C"};
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::left, &Variable::name), "A");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Implication::left, &Variable::name), "B");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Implication::right, &Variable::name), "C");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, &Variable::name), "A");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IL, &Variable::name), "B");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IR, &Variable::name), "C");
   }
 
   {
     Test t{"A->B|C->D"};
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::left, &Variable::name), "A");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Implication::left, &Disjunction::left, &Variable::name), "B");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Implication::left, &Disjunction::right, &Variable::name), "C");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Implication::right, &Variable::name), "D");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, &Variable::name), "A");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IL, DL, &Variable::name), "B");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IL, DR, &Variable::name), "C");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IR, &Variable::name), "D");
   }
 
   {
     Test t{"A|B->C&D"};
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::left, &Disjunction::left, &Variable::name), "A");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::left, &Disjunction::right, &Variable::name), "B");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Conjunction::left, &Variable::name), "C");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Conjunction::right, &Variable::name), "D");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, DL, &Variable::name), "A");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, DR, &Variable::name), "B");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, CL, &Variable::name), "C");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, CR, &Variable::name), "D");
   }
 
   {
     Test t{"((A))->(B|(C|D))"};
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::left, &Variable::name), "A");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Disjunction::left, &Variable::name), "B");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Disjunction::right, &Disjunction::left, &Variable::name), "C");
-    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), &Implication::right, &Disjunction::right, &Disjunction::right, &Variable::name), "D");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, &Variable::name), "A");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, DL, &Variable::name), "B");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, DR, DL, &Variable::name), "C");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, DR, DR, &Variable::name), "D");
+  }
+  {
+    Test t{"(A->B)->(A->B->C)->(A->C)"};
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, IL, &Variable::name), "A");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, IR, &Variable::name), "B");
+
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IL, IL, &Variable::name), "A");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IL, IR, IL,  &Variable::name), "B");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IL, IR, IR,  &Variable::name), "C");
+
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IR, IL, &Variable::name), "A");
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IR, IR, IR, &Variable::name), "C");
+  }
+  {
+    Test t{"A -> B -> A & B"};
   }
 
   // TODO: test negation

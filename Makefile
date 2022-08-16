@@ -5,15 +5,21 @@ TEST_CFLAGS = $(CFLAGS) -fno-omit-frame-pointer -fsanitize=address,leak,undefine
 
 all: b b_debug test_parser test_semantic
 
+ut: test_parser test_semantic
+
 b:
-	$(CC) $(CFLAGS) b.cc expression_calculus/expression.cc -o b.out
+	$(CC) $(CFLAGS) b.cc expression_calculus/expression.cc -o b
 
 b_debug:
-	$(CC) $(TEST_CFLAGS) b.cc expression_calculus/expression.cc -o b_debug.out
+	$(CC) $(TEST_CFLAGS) b.cc expression_calculus/expression.cc -o b_debug
 
 test_parser:
-	$(CC) $(TEST_CFLAGS) test_parser.cc expression_calculus/expression.cc -o test_parser.out
+	$(CC) $(TEST_CFLAGS) test_parser.cc expression_calculus/expression.cc -o test_parser
 
 test_semantic:
-	$(CC) $(TEST_CFLAGS) test_semantic.cc expression_calculus/expression.cc -o test_semantic.out
+	$(CC) $(TEST_CFLAGS) test_semantic.cc expression_calculus/expression.cc -o test_semantic
 
+.PHONY: clean
+
+clean:
+	rm -f b_debug b test_parser test_semantic
