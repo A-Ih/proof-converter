@@ -61,6 +61,8 @@ public:
       auto pos = v.find_first_not_of(" \t\r\f\v");
       if (pos != std::string_view::npos) {
         v.remove_prefix(pos);
+      } else {
+        break;
       }
       if (v.empty()) {
         break;
