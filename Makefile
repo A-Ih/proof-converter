@@ -21,6 +21,9 @@ test_parser:
 test_semantic:
 	$(CC) $(TEST_CFLAGS) test_semantic.cc $(SOURCES) -o test_semantic
 
+archive:
+	git archive --format zip -o tdir/ibrahim-ml.zip HEAD
+
 .PHONY: clean
 
 clean:
