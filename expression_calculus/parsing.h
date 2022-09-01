@@ -27,8 +27,6 @@ enum class TokenType {
   VARIABLE
 };
 
-// TODO: cover with tests, this is an easily testable part in which it's too
-// easy to write a bug
 struct Tokenizer {
 public:
   using Token = std::pair<TokenType, std::string_view>;
@@ -113,7 +111,7 @@ public:
 
 private:
   std::size_t currentToken;
-  std::vector<std::pair<TokenType, std::string_view>> tokens;
+  std::vector<Token> tokens;
   std::string tokenizedString;
 };
 
@@ -123,8 +121,6 @@ private:
 
 struct Parser {
 public:
-  // TODO: test via this constructor, it should be pretty easy at this point
-  // (although for matching purposes we may want to use prefix notation)
   Parser(std::string expressionLine) : tokenizer{std::make_unique<Tokenizer>(std::move(expressionLine))} {}
   Parser(std::unique_ptr<Tokenizer>&& t) : tokenizer{std::move(t)} {}
 
@@ -212,6 +208,14 @@ public:
 
   bool IsExhausted() const {
     return !tokenizer->Peek();
+  }
+
+  std::vector<std::string> GetTokens() const {
+    std::vector<std::string> result;
+    for (const auto& [tokenType, token] : tokenizer->GetTokens()) {
+      result.emplace_back(token);
+    }
+    return result;
   }
 
 private:

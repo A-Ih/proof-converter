@@ -7,7 +7,7 @@ SOURCES = expression_calculus/expression.cc expression_calculus/rules.cc
 
 all: b
 
-ut: test_parser test_semantic
+ut: test_parser test_semantic test_tokenizer
 
 b:
 	$(CC) $(CFLAGS) b.cc $(SOURCES) -o b
@@ -21,10 +21,13 @@ test_parser:
 test_semantic:
 	$(CC) $(TEST_CFLAGS) test_semantic.cc $(SOURCES) -o test_semantic
 
-archive:
-	git archive --format zip -o tdir/ibrahim-ml.zip HEAD
+test_tokenizer:
+	$(CC) $(TEST_CFLAGS) test_tokenizer.cc $(SOURCES) -o test_tokenizer
 
-.PHONY: clean
+archive:
+	git archive --format zip -o ibrahim-ml.zip HEAD
+
+.PHONY: clean test_parser test_semantic test_tokenizer
 
 clean:
-	rm -f b_debug b test_parser test_semantic
+	rm -f b_debug b test_parser test_semantic test_tokenizer

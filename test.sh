@@ -4,7 +4,7 @@ make clean
 
 make ut
 echo Running unit tests
-for i in test_parser test_semantic; do
+for i in test_parser test_semantic test_tokenizer; do
     echo Running $i
     if ./$i; then
         echo ====SUCCESS====

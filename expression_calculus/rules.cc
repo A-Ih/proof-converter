@@ -233,7 +233,7 @@ std::shared_ptr<NaturalNode> MakeAx7(std::shared_ptr<Semantic::Expression> phi) 
   return
     std::make_shared<IImpl>(TPtr{}, phi,
         std::make_shared<IrDis>(b, aOrB,
-          std::make_shared<Ax>(TPtr{}, a)));
+          std::make_shared<Ax>(TPtr{}, b)));
 }
 
 std::shared_ptr<NaturalNode> MakeAx8(std::shared_ptr<Semantic::Expression> phi) {

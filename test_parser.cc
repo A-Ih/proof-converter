@@ -98,6 +98,12 @@ int main() {
   {
     Test t{"A -> B -> A & B"};
   }
-
-  // TODO: test negation
+  {
+    Test t{"!A"};
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, &Variable::name), "A");
+  }
+  {
+    Test t{"!((A))"};
+    ASSERT_EQUAL(GetComponent<std::string>(t.GetExpr(), IL, &Variable::name), "A");
+  }
 }
