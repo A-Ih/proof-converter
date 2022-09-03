@@ -1,3 +1,6 @@
+# What is this program
+This program is a solution to task B of contest from our Math Logic course.
+All the task statements are located at `contest-mathlog-2021-ru.pdf` (russian).
 # How to compile and run
 ```
 make b
